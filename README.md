@@ -216,6 +216,17 @@
             font-size: 14px;
             color: #2c3e50;
         }
+        .user-list {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .user-item {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
     </style>
 </head>
 <body>
@@ -243,6 +254,20 @@
                 <div class="help-text">
                     <p>Для входа в систему используйте выданные вам логин и пароль.</p>
                     <p>При возникновении проблем с доступом обратитесь к администратору.</p>
+                </div>
+
+                <div class="user-list">
+                    <h3>Доступные пользователи:</h3>
+                    <div class="user-item"><strong>Администратор:</strong> admin / admin123</div>
+                    <div class="user-item"><strong>Артем Козирний:</strong> artem / 123321</div>
+                    <div class="user-item"><strong>Мария Сидорова:</strong> maria / 123456</div>
+                    <div class="user-item"><strong>Иван Иванов:</strong> ivan / 111</div>
+                    <div class="user-item"><strong>Петр Петров:</strong> petr / 222</div>
+                    <div class="user-item"><strong>Анна Смирнова:</strong> anna / 333</div>
+                    <div class="user-item"><strong>Сергей Кузнецов:</strong> sergey / 444</div>
+                    <div class="user-item"><strong>Ольга Васильева:</strong> olga / 555</div>
+                    <div class="user-item"><strong>Дмитрий Попов:</strong> dmitry / 666</div>
+                    <div class="user-item"><strong>Екатерина Соколова:</strong> ekaterina / 777</div>
                 </div>
             </div>
             
@@ -300,6 +325,8 @@
                     </table>
                     
                     <div class="admin-controls">
+                        <button onclick="exportData()">Экспорт данных</button>
+                        <button onclick="importData()">Импорт данных</button>
                         <button class="logout-btn" onclick="logout()">Выйти</button>
                     </div>
                 </div>
@@ -325,18 +352,47 @@
     </div>
 
     <script>
-        // Данные системы
-        let totalSystemPoints = 10000;
-        let users = [
-            { id: 1, name: "Артем Козирний", login: "Артем Козирний", password: "123321", points: 500 },
-            { id: 2, name: "Мария Сидорова", login: "Мария Сидорова", password: "123456", points: 350 },
+        // Ключи для localStorage
+        const STORAGE_KEYS = {
+            USERS: 'bank_points_users',
+            TOTAL_POINTS: 'bank_points_total',
+            NEXT_ID: 'bank_points_next_id'
+        };
+
+        // Функции для работы с localStorage
+        function saveToStorage(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        function loadFromStorage(key, defaultValue) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultValue;
+        }
+
+        // Загрузка данных из localStorage или установка значений по умолчанию
+        let users = loadFromStorage(STORAGE_KEYS.USERS, [
+            { id: 1, name: "Артем Козирний", login: "artem", password: "123321", points: 500 },
+            { id: 2, name: "Мария Сидорова", login: "maria", password: "123456", points: 350 },
             { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 },
-            { id: 4, name: "Петр Петров", login: "petr", password: "222", points: 230 }
-        ];
-        
-        let nextId = 5;
+            { id: 4, name: "Петр Петров", login: "petr", password: "222", points: 230 },
+            { id: 5, name: "Анна Смирнова", login: "anna", password: "333", points: 180 },
+            { id: 6, name: "Сергей Кузнецов", login: "sergey", password: "444", points: 270 },
+            { id: 7, name: "Ольга Васильева", login: "olga", password: "555", points: 190 },
+            { id: 8, name: "Дмитрий Попов", login: "dmitry", password: "666", points: 210 },
+            { id: 9, name: "Екатерина Соколова", login: "ekaterina", password: "777", points: 320 }
+        ]);
+
+        let totalSystemPoints = loadFromStorage(STORAGE_KEYS.TOTAL_POINTS, 10000);
+        let nextId = loadFromStorage(STORAGE_KEYS.NEXT_ID, 10);
         let currentUser = null;
-        
+
+        // Сохранение данных при изменении
+        function saveAllData() {
+            saveToStorage(STORAGE_KEYS.USERS, users);
+            saveToStorage(STORAGE_KEYS.TOTAL_POINTS, totalSystemPoints);
+            saveToStorage(STORAGE_KEYS.NEXT_ID, nextId);
+        }
+
         // Функция входа в систему
         function tryLogin() {
             const login = document.getElementById('login').value;
@@ -463,10 +519,6 @@
         
         // Обновление отображения общей суммы баллов
         function updateTotalPoints() {
-            // Пересчитываем общую сумму
-            const userPoints = users.reduce((sum, user) => sum + user.points, 0);
-            totalSystemPoints = 10000 - userPoints;
-            
             document.getElementById('totalPoints').textContent = totalSystemPoints;
         }
         
@@ -503,6 +555,12 @@
                     user.password = newPassword || user.password;
                     user.points = points;
                     
+                    // Обновляем общую сумму
+                    totalSystemPoints -= difference;
+                    
+                    // Сохраняем данные
+                    saveAllData();
+                    
                     // Обновляем отображение
                     updateUserTable();
                     updateTotalPoints();
@@ -528,8 +586,14 @@
             const user = users[userIndex];
             
             if (confirm(`Вы уверены, что хотите удалить пользователя ${user.name}?`)) {
+                // Возвращаем баллы в общую сумму
+                totalSystemPoints += user.points;
+                
                 // Удаляем пользователя
                 users.splice(userIndex, 1);
+                
+                // Сохраняем данные
+                saveAllData();
                 
                 // Обновляем отображение
                 updateUserTable();
@@ -568,6 +632,12 @@
                     points: points
                 });
                 
+                // Уменьшаем общую сумму
+                totalSystemPoints -= points;
+                
+                // Сохраняем данные
+                saveAllData();
+                
                 // Очищаем поля ввода
                 document.getElementById('newUserName').value = '';
                 document.getElementById('newUserLogin').value = '';
@@ -588,12 +658,21 @@
         function resetSystem() {
             if (confirm('Вы уверены, что хотите сбросить систему? Все данные будут удалены.')) {
                 users = [
-                    { id: 1, name: "Артем Козирний", login: "Артем Козирний", password: "123321", points: 500 },
-                    { id: 2, name: "Мария Сидорова", login: "Мария Сидорова", password: "123456", points: 350 },
+                    { id: 1, name: "Артем Козирний", login: "artem", password: "123321", points: 500 },
+                    { id: 2, name: "Мария Сидорова", login: "maria", password: "123456", points: 350 },
                     { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 },
-                    { id: 4, name: "Петр Петров", login: "petr", password: "222", points: 230 }
+                    { id: 4, name: "Петр Петров", login: "petr", password: "222", points: 230 },
+                    { id: 5, name: "Анна Смирнова", login: "anna", password: "333", points: 180 },
+                    { id: 6, name: "Сергей Кузнецов", login: "sergey", password: "444", points: 270 },
+                    { id: 7, name: "Ольга Васильева", login: "olga", password: "555", points: 190 },
+                    { id: 8, name: "Дмитрий Попов", login: "dmitry", password: "666", points: 210 },
+                    { id: 9, name: "Екатерина Соколова", login: "ekaterina", password: "777", points: 320 }
                 ];
-                nextId = 5;
+                totalSystemPoints = 10000;
+                nextId = 10;
+                
+                // Сохраняем данные
+                saveAllData();
                 
                 // Обновляем отображение
                 updateUserTable();
@@ -601,6 +680,62 @@
                 
                 alert('Система успешно сброшена!');
             }
+        }
+
+        // Экспорт данных
+        function exportData() {
+            const data = {
+                users: users,
+                totalSystemPoints: totalSystemPoints,
+                nextId: nextId
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'bank_points_data.json';
+            link.click();
+        }
+
+        // Импорт данных
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        if (data.users && data.totalSystemPoints !== undefined && data.nextId !== undefined) {
+                            users = data.users;
+                            totalSystemPoints = data.totalSystemPoints;
+                            nextId = data.nextId;
+                            
+                            saveAllData();
+                            updateUserTable();
+                            updateTotalPoints();
+                            
+                            alert('Данные успешно импортированы!');
+                        } else {
+                            alert('Неверный формат файла данных');
+                        }
+                    } catch (error) {
+                        alert('Ошибка при чтении файла: ' + error.message);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
         }
         
         // Инициализация страницы
