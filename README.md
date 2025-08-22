@@ -1,1 +1,613 @@
-# bank-points-system
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Банк баллов</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 25px;
+        }
+        .login-section, .admin-panel, .user-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        input[type="text"], input[type="password"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            padding: 12px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .logout-btn {
+            background: #e74c3c;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        .total-points {
+            background: #2ecc71;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .total-points h2 {
+            color: white;
+            margin-bottom: 10px;
+        }
+        .total-points .amount {
+            font-size: 42px;
+            font-weight: 700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #34495e;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        tr:hover {
+            background: #ecf0f1;
+        }
+        .edit-btn, .delete-btn {
+            padding: 8px 12px;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+        .delete-btn {
+            background: #e74c3c;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .success {
+            color: #2ecc71;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .hidden {
+            display: none;
+        }
+        .user-form {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .user-form input {
+            flex: 1;
+        }
+        .admin-controls {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #bdc3c7;
+        }
+        .user-info {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .user-points {
+            font-size: 32px;
+            font-weight: 700;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .user-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        @media (max-width: 768px) {
+            .user-form {
+                flex-direction: column;
+            }
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+        }
+        .tab {
+            padding: 12px 20px;
+            background: #ecf0f1;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background: #3498db;
+            color: white;
+        }
+        .password-cell {
+            font-family: monospace;
+            letter-spacing: 1px;
+        }
+        .help-text {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e8f4fc;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Банк баллов</h1>
+            <p>Система управления баллами пользователей</p>
+        </header>
+        
+        <div class="content">
+            <!-- Форма входа -->
+            <div id="loginSection" class="login-section">
+                <h2>Вход в систему</h2>
+                <div class="form-group">
+                    <label for="login">Логин:</label>
+                    <input type="text" id="login" placeholder="Введите логин">
+                </div>
+                <div class="form-group">
+                    <label for="password">Пароль:</label>
+                    <input type="password" id="password" placeholder="Введите пароль">
+                </div>
+                <button onclick="tryLogin()">Войти</button>
+                <p id="loginError" class="error"></p>
+                
+                <div class="help-text">
+                    <p>Для входа в систему используйте выданные вам логин и пароль.</p>
+                    <p>При возникновении проблем с доступом обратитесь к администратору.</p>
+                </div>
+            </div>
+            
+            <!-- Личный кабинет пользователя -->
+            <div id="userSection" class="hidden">
+                <div class="user-info">
+                    <h2>Личный кабинет</h2>
+                    <p>Добро пожаловать, <span id="userName"></span>!</p>
+                </div>
+                
+                <div class="total-points">
+                    <h2>Ваши баллы</h2>
+                    <div class="user-points" id="userPoints">0</div>
+                </div>
+                
+                <div class="user-actions">
+                    <button class="logout-btn" onclick="logout()">Выйти</button>
+                </div>
+            </div>
+            
+            <!-- Панель администратора -->
+            <div id="adminSection" class="hidden">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('adminMain')">Управление</div>
+                    <div class="tab" onclick="switchTab('userManagement')">Пользователи</div>
+                </div>
+                
+                <!-- Вкладка управления -->
+                <div id="adminMainTab">
+                    <div class="user-info">
+                        <h2>Панель администратора</h2>
+                        <p>Вы вошли как администратор системы</p>
+                    </div>
+                    
+                    <div class="total-points">
+                        <h2>Общая сумма баллов в системе</h2>
+                        <div class="amount" id="totalPoints">10000</div>
+                    </div>
+                    
+                    <!-- Таблица пользователей -->
+                    <h2>Пользователи и их баллы</h2>
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Пользователь</th>
+                                <th>Логин</th>
+                                <th>Пароль</th>
+                                <th>Баллы</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Данные будут заполнены через JavaScript -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="admin-controls">
+                        <button class="logout-btn" onclick="logout()">Выйти</button>
+                    </div>
+                </div>
+                
+                <!-- Вкладка управления пользователями -->
+                <div id="userManagementTab" class="hidden">
+                    <h2>Добавление пользователя</h2>
+                    <div class="user-form">
+                        <input type="text" id="newUserName" placeholder="ФИО пользователя">
+                        <input type="text" id="newUserLogin" placeholder="Логин">
+                        <input type="password" id="newUserPassword" placeholder="Пароль">
+                        <input type="number" id="newUserPoints" placeholder="Баллы" min="0">
+                        <button onclick="addUser()">Добавить пользователя</button>
+                    </div>
+                    
+                    <div class="admin-controls">
+                        <button onclick="resetSystem()">Сбросить систему</button>
+                        <button class="logout-btn" onclick="logout()">Выйти</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Данные системы
+        let totalSystemPoints = 10000;
+        let users = [
+            { id: 1, name: "Артем Козирний", login: "Артем Козирний", password: "123321", points: 500 },
+            { id: 2, name: "Мария Сидорова", login: "Мария Сидорова", password: "123456", points: 350 },
+            { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 },
+            { id: 4, name: "Петр Петров", login: "petr", password: "222", points: 230 }
+        ];
+        
+        let nextId = 5;
+        let currentUser = null;
+        
+        // Функция входа в систему
+        function tryLogin() {
+            const login = document.getElementById('login').value;
+            const password = document.getElementById('password').value;
+            const errorElement = document.getElementById('loginError');
+            
+            // Сброс предыдущих ошибок
+            errorElement.textContent = '';
+            
+            // Проверка администратора
+            if (login === 'admin' && password === 'admin123') {
+                currentUser = { isAdmin: true, name: 'Администратор' };
+                showAdminPanel();
+                return;
+            }
+            
+            // Поиск пользователя
+            const user = users.find(u => u.login === login && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                showUserPanel();
+            } else {
+                errorElement.textContent = 'Неверные логин или пароль';
+            }
+        }
+        
+        // Показать панель администратора
+        function showAdminPanel() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+            document.getElementById('adminSection').classList.remove('hidden');
+            
+            updateUserTable();
+            updateTotalPoints();
+        }
+        
+        // Показать личный кабинет пользователя
+        function showUserPanel() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('adminSection').classList.add('hidden');
+            document.getElementById('userSection').classList.remove('hidden');
+            
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userPoints').textContent = currentUser.points;
+        }
+        
+        // Выход из системы
+        function logout() {
+            currentUser = null;
+            document.getElementById('login').value = '';
+            document.getElementById('password').value = '';
+            
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('adminSection').classList.add('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+        }
+        
+        // Переключение вкладок в админке
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('adminMainTab').classList.add('hidden');
+            document.getElementById('userManagementTab').classList.add('hidden');
+            
+            if (tabName === 'adminMain') {
+                document.querySelector('.tab:first-child').classList.add('active');
+                document.getElementById('adminMainTab').classList.remove('hidden');
+            } else {
+                document.querySelector('.tab:last-child').classList.add('active');
+                document.getElementById('userManagementTab').classList.remove('hidden');
+            }
+        }
+        
+        // Обновление таблицы пользователей
+        function updateUserTable() {
+            const tbody = document.querySelector('#usersTable tbody');
+            tbody.innerHTML = '';
+            
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                
+                // Ячейка с именем пользователя
+                const nameCell = document.createElement('td');
+                nameCell.textContent = user.name;
+                row.appendChild(nameCell);
+                
+                // Ячейка с логином
+                const loginCell = document.createElement('td');
+                loginCell.textContent = user.login;
+                row.appendChild(loginCell);
+                
+                // Ячейка с паролем (скрыта звездочками)
+                const passwordCell = document.createElement('td');
+                passwordCell.textContent = '•'.repeat(user.password.length);
+                passwordCell.classList.add('password-cell');
+                row.appendChild(passwordCell);
+                
+                // Ячейка с баллами
+                const pointsCell = document.createElement('td');
+                pointsCell.textContent = user.points;
+                row.appendChild(pointsCell);
+                
+                // Ячейка с кнопками действий
+                const actionsCell = document.createElement('td');
+                
+                // Кнопка редактирования
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Редактировать';
+                editButton.classList.add('edit-btn');
+                editButton.onclick = () => editUser(user.id);
+                actionsCell.appendChild(editButton);
+                
+                // Кнопка удаления
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Удалить';
+                deleteButton.classList.add('delete-btn');
+                deleteButton.onclick = () => deleteUser(user.id);
+                actionsCell.appendChild(deleteButton);
+                
+                row.appendChild(actionsCell);
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Обновление отображения общей суммы баллов
+        function updateTotalPoints() {
+            // Пересчитываем общую сумму
+            const userPoints = users.reduce((sum, user) => sum + user.points, 0);
+            totalSystemPoints = 10000 - userPoints;
+            
+            document.getElementById('totalPoints').textContent = totalSystemPoints;
+        }
+        
+        // Редактирование пользователя
+        function editUser(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            const newName = prompt(`Введите новое имя для пользователя:`, user.name);
+            if (newName === null) return;
+            
+            const newLogin = prompt(`Введите новый логин для пользователя:`, user.login);
+            if (newLogin === null) return;
+            
+            const newPassword = prompt(`Введите новый пароль для пользователя:`, user.password);
+            if (newPassword === null) return;
+            
+            const newPoints = prompt(`Введите новое количество баллов для пользователя:`, user.points);
+            if (newPoints !== null && !isNaN(newPoints) && newPoints.trim() !== '') {
+                const points = parseInt(newPoints);
+                if (points >= 0) {
+                    // Вычисляем разницу для изменения общей суммы
+                    const difference = points - user.points;
+                    
+                    // Проверяем, достаточно ли баллов в системе
+                    if (difference > totalSystemPoints) {
+                        alert('Недостаточно баллов в системе!');
+                        return;
+                    }
+                    
+                    // Обновляем данные пользователя
+                    user.name = newName || user.name;
+                    user.login = newLogin || user.login;
+                    user.password = newPassword || user.password;
+                    user.points = points;
+                    
+                    // Обновляем отображение
+                    updateUserTable();
+                    updateTotalPoints();
+                    
+                    // Если редактируется текущий пользователь, обновляем его панель
+                    if (currentUser && currentUser.id === user.id) {
+                        document.getElementById('userName').textContent = user.name;
+                        document.getElementById('userPoints').textContent = user.points;
+                    }
+                    
+                    alert('Данные пользователя успешно обновлены!');
+                } else {
+                    alert('Баллы должны быть положительным числом');
+                }
+            }
+        }
+        
+        // Удаление пользователя
+        function deleteUser(userId) {
+            const userIndex = users.findIndex(u => u.id === userId);
+            if (userIndex === -1) return;
+            
+            const user = users[userIndex];
+            
+            if (confirm(`Вы уверены, что хотите удалить пользователя ${user.name}?`)) {
+                // Удаляем пользователя
+                users.splice(userIndex, 1);
+                
+                // Обновляем отображение
+                updateUserTable();
+                updateTotalPoints();
+                
+                alert('Пользователь успешно удален!');
+            }
+        }
+        
+        // Добавление нового пользователя
+        function addUser() {
+            const name = document.getElementById('newUserName').value;
+            const login = document.getElementById('newUserLogin').value;
+            const password = document.getElementById('newUserPassword').value;
+            const points = parseInt(document.getElementById('newUserPoints').value);
+            
+            if (name && login && password && !isNaN(points) && points >= 0) {
+                // Проверяем, достаточно ли баллов в системе
+                if (points > totalSystemPoints) {
+                    alert('Недостаточно баллов в системе!');
+                    return;
+                }
+                
+                // Проверяем, не занят ли логин
+                if (users.some(u => u.login === login)) {
+                    alert('Пользователь с таким логином уже существует!');
+                    return;
+                }
+                
+                // Добавляем пользователя
+                users.push({
+                    id: nextId++,
+                    name: name,
+                    login: login,
+                    password: password,
+                    points: points
+                });
+                
+                // Очищаем поля ввода
+                document.getElementById('newUserName').value = '';
+                document.getElementById('newUserLogin').value = '';
+                document.getElementById('newUserPassword').value = '';
+                document.getElementById('newUserPoints').value = '';
+                
+                // Обновляем отображение
+                updateUserTable();
+                updateTotalPoints();
+                
+                alert('Пользователь успешно добавлен!');
+            } else {
+                alert('Пожалуйста, заполните все поля корректно');
+            }
+        }
+        
+        // Сброс системы
+        function resetSystem() {
+            if (confirm('Вы уверены, что хотите сбросить систему? Все данные будут удалены.')) {
+                users = [
+                    { id: 1, name: "Артем Козирний", login: "Артем Козирний", password: "123321", points: 500 },
+                    { id: 2, name: "Мария Сидорова", login: "Мария Сидорова", password: "123456", points: 350 },
+                    { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 },
+                    { id: 4, name: "Петр Петров", login: "petr", password: "222", points: 230 }
+                ];
+                nextId = 5;
+                
+                // Обновляем отображение
+                updateUserTable();
+                updateTotalPoints();
+                
+                alert('Система успешно сброшена!');
+            }
+        }
+        
+        // Инициализация страницы
+        window.onload = function() {
+            updateUserTable();
+            updateTotalPoints();
+        };
+    </script>
+</body>
+</html>
