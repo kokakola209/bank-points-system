@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Банк баллов</title>
+    <title>Онлайн Банк баллов</title>
     <style>
         * {
             box-sizing: border-box;
@@ -183,61 +183,33 @@
             justify-content: center;
             gap: 15px;
         }
-        @media (max-width: 768px) {
-            .user-form {
-                flex-direction: column;
-            }
-        }
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #3498db;
-        }
-        .tab {
-            padding: 12px 20px;
-            background: #ecf0f1;
-            cursor: pointer;
-            border-radius: 5px 5px 0 0;
-            margin-right: 5px;
-        }
-        .tab.active {
-            background: #3498db;
-            color: white;
-        }
-        .password-cell {
-            font-family: monospace;
-            letter-spacing: 1px;
-        }
-        .help-text {
-            margin-top: 15px;
-            padding: 10px;
+        .simple-info {
             background: #e8f4fc;
-            border-radius: 5px;
-            font-size: 14px;
-            color: #2c3e50;
-        }
-        .edit-total-form {
-            margin: 15px 0;
             padding: 15px;
-            background: #e8f4fc;
             border-radius: 8px;
-        }
-        .edit-total-form input {
-            margin-right: 10px;
+            margin: 15px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Банк баллов</h1>
-            <p>Система управления баллами пользователей</p>
+            <h1>Онлайн Банк баллов</h1>
+            <p>Простая система управления баллами</p>
         </header>
         
         <div class="content">
             <!-- Форма входа -->
             <div id="loginSection" class="login-section">
                 <h2>Вход в систему</h2>
+                
+                <div class="simple-info">
+                    <strong>Тестовые доступы:</strong><br>
+                    • Админ: <code>admin</code> / <code>admin123</code><br>
+                    • Артем Козирний: <code>artem</code> / <code>123321</code><br>
+                    • Мария Сидорова: <code>maria</code> / <code>123456</code>
+                </div>
+                
                 <div class="form-group">
                     <label for="login">Логин:</label>
                     <input type="text" id="login" placeholder="Введите логин">
@@ -248,11 +220,6 @@
                 </div>
                 <button onclick="tryLogin()">Войти</button>
                 <p id="loginError" class="error"></p>
-                
-                <div class="help-text">
-                    <p>Для входа в систему используйте выданные вам логин и пароль.</p>
-                    <p>При возникновении проблем с доступом обратитесь к администратору.</p>
-                </div>
             </div>
             
             <!-- Личный кабинет пользователя -->
@@ -273,431 +240,260 @@
                 </div>
                 
                 <div class="user-actions">
+                    <button onclick="loadData()">🔄 Обновить данные</button>
                     <button class="logout-btn" onclick="logout()">Выйти</button>
                 </div>
             </div>
             
             <!-- Панель администратора -->
             <div id="adminSection" class="hidden">
-                <div class="tabs">
-                    <div class="tab active" onclick="switchTab('adminMain')">Управление</div>
-                    <div class="tab" onclick="switchTab('userManagement')">Пользователи</div>
+                <div class="user-info">
+                    <h2>Панель администратора</h2>
+                    <p>Вы вошли как администратор системы</p>
                 </div>
                 
-                <!-- Вкладка управления -->
-                <div id="adminMainTab">
-                    <div class="user-info">
-                        <h2>Панель администратора</h2>
-                        <p>Вы вошли как администратор системы</p>
-                    </div>
-                    
-                    <div class="total-points">
-                        <h2>Общая сумма баллов в системе</h2>
-                        <div class="amount" id="totalPointsAdmin">10000</div>
-                    </div>
+                <div class="total-points">
+                    <h2>Общая сумма баллов в системе</h2>
+                    <div class="amount" id="totalPointsAdmin">10000</div>
+                </div>
 
-                    <div class="edit-total-form">
-                        <h3>Изменить общую сумму баллов</h3>
-                        <input type="number" id="editTotalPoints" placeholder="Новая общая сумма" min="0">
-                        <button onclick="updateTotalPoints()">Обновить</button>
-                    </div>
-                    
-                    <!-- Таблица пользователей -->
-                    <h2>Пользователи и их баллы</h2>
-                    <table id="usersTable">
-                        <thead>
-                            <tr>
-                                <th>Пользователь</th>
-                                <th>Логин</th>
-                                <th>Пароль</th>
-                                <th>Баллы</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Данные будут заполнены через JavaScript -->
-                        </tbody>
-                    </table>
-                    
-                    <div class="admin-controls">
-                        <button onclick="exportData()">Экспорт данных</button>
-                        <button onclick="importData()">Импорт данных</button>
-                        <button class="logout-btn" onclick="logout()">Выйти</button>
-                    </div>
+                <div class="simple-info">
+                    <h3>Изменить общую сумму баллов</h3>
+                    <input type="number" id="editTotalPoints" placeholder="Новая общая сумма" min="0">
+                    <button onclick="updateTotalPoints()">Обновить</button>
                 </div>
                 
-                <!-- Вкладка управления пользователями -->
-                <div id="userManagementTab" class="hidden">
-                    <h2>Добавление пользователя</h2>
-                    <div class="user-form">
-                        <input type="text" id="newUserName" placeholder="ФИО пользователя">
-                        <input type="text" id="newUserLogin" placeholder="Логин">
-                        <input type="password" id="newUserPassword" placeholder="Пароль">
-                        <input type="number" id="newUserPoints" placeholder="Баллы" min="0">
-                        <button onclick="addUser()">Добавить пользователя</button>
-                    </div>
-                    
-                    <div class="admin-controls">
-                        <button onclick="resetSystem()">Сбросить систему</button>
-                        <button class="logout-btn" onclick="logout()">Выйти</button>
-                    </div>
+                <h2>Пользователи и их баллы</h2>
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Логин</th>
+                            <th>Баллы</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                
+                <h2>Добавить нового пользователя</h2>
+                <div class="user-form">
+                    <input type="text" id="newUserName" placeholder="ФИО пользователя">
+                    <input type="text" id="newUserLogin" placeholder="Логин">
+                    <input type="password" id="newUserPassword" placeholder="Пароль">
+                    <input type="number" id="newUserPoints" placeholder="Баллы" min="0">
+                    <button onclick="addUser()">Добавить пользователя</button>
+                </div>
+                
+                <div class="admin-controls">
+                    <button onclick="loadData()">🔄 Обновить данные</button>
+                    <button onclick="exportData()">📤 Экспорт данных</button>
+                    <button onclick="resetSystem()">🔄 Сбросить систему</button>
+                    <button class="logout-btn" onclick="logout()">Выйти</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Ключи для localStorage
-        const STORAGE_KEYS = {
-            USERS: 'bank_points_users',
-            TOTAL_POINTS: 'bank_points_total',
-            NEXT_ID: 'bank_points_next_id'
-        };
-
-        // Функции для работы с localStorage
-        function saveToStorage(key, data) {
-            localStorage.setItem(key, JSON.stringify(data));
-        }
-
-        function loadFromStorage(key, defaultValue) {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : defaultValue;
-        }
-
-        // Загрузка данных из localStorage или установка значений по умолчанию
-        let users = loadFromStorage(STORAGE_KEYS.USERS, [
-            { id: 1, name: "Артем Козирний", login: "artem", password: "123321", points: 500 },
-            { id: 2, name: "Мария Сидорова", login: "maria", password: "123456", points: 350 },
-            { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 },
-            { id: 4, name: "Петр Петров", login: "petr", password: "222", points: 230 },
-            { id: 5, name: "Анна Смирнова", login: "anna", password: "333", points: 180 },
-            { id: 6, name: "Сергей Кузнецов", login: "sergey", password: "444", points: 270 },
-            { id: 7, name: "Ольга Васильева", login: "olga", password: "555", points: 190 },
-            { id: 8, name: "Дмитрий Попов", login: "dmitry", password: "666", points: 210 },
-            { id: 9, name: "Екатерина Соколова", login: "ekaterina", password: "777", points: 320 }
-        ]);
-
-        let totalSystemPoints = loadFromStorage(STORAGE_KEYS.TOTAL_POINTS, 10000);
-        let nextId = loadFromStorage(STORAGE_KEYS.NEXT_ID, 10);
+        // Простые функции для работы с данными
+        const STORAGE_KEY = 'bankPointsData';
+        
+        let users = [];
+        let totalSystemPoints = 10000;
         let currentUser = null;
 
-        // Сохранение данных при изменении
-        function saveAllData() {
-            saveToStorage(STORAGE_KEYS.USERS, users);
-            saveToStorage(STORAGE_KEYS.TOTAL_POINTS, totalSystemPoints);
-            saveToStorage(STORAGE_KEYS.NEXT_ID, nextId);
+        // Загрузка данных
+        function loadData() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                users = data.users;
+                totalSystemPoints = data.totalSystemPoints;
+            } else {
+                // Первоначальные данные
+                users = [
+                    { id: 1, name: "Артем Козирний", login: "artem", password: "123321", points: 500 },
+                    { id: 2, name: "Мария Сидорova", login: "maria", password: "123456", points: 350 },
+                    { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 }
+                ];
+                totalSystemPoints = 10000;
+                saveData();
+            }
+            
+            updateUI();
+            alert('Данные обновлены!');
         }
 
-        // Функция входа в систему
+        // Сохранение данных
+        function saveData() {
+            const data = {
+                users: users,
+                totalSystemPoints: totalSystemPoints,
+                lastUpdate: new Date().toISOString()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            if (currentUser) {
+                if (currentUser.isAdmin) {
+                    updateUserTable();
+                    updateTotalPointsDisplay();
+                } else {
+                    document.getElementById('userName').textContent = currentUser.name;
+                    document.getElementById('userPoints').textContent = currentUser.points;
+                    document.getElementById('totalPoints').textContent = totalSystemPoints;
+                }
+            }
+        }
+
+        // Функция входа
         function tryLogin() {
             const login = document.getElementById('login').value;
             const password = document.getElementById('password').value;
-            const errorElement = document.getElementById('loginError');
             
-            // Сброс предыдущих ошибок
-            errorElement.textContent = '';
+            // Загружаем данные сначала
+            loadData();
             
-            // Проверка администратора
             if (login === 'admin' && password === 'admin123') {
                 currentUser = { isAdmin: true, name: 'Администратор' };
                 showAdminPanel();
                 return;
             }
             
-            // Поиск пользователя
             const user = users.find(u => u.login === login && u.password === password);
-            
             if (user) {
                 currentUser = user;
                 showUserPanel();
             } else {
-                errorElement.textContent = 'Неверные логин или пароль';
+                alert('Неверные логин или пароль');
             }
         }
-        
-        // Показать панель администратора
+
+        // Показать админ-панель
         function showAdminPanel() {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('userSection').classList.add('hidden');
             document.getElementById('adminSection').classList.remove('hidden');
-            
-            updateUserTable();
-            updateTotalPointsDisplay();
+            updateUI();
         }
-        
-        // Показать личный кабинет пользователя
+
+        // Показать пользовательскую панель
         function showUserPanel() {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('adminSection').classList.add('hidden');
             document.getElementById('userSection').classList.remove('hidden');
-            
-            document.getElementById('userName').textContent = currentUser.name;
-            document.getElementById('userPoints').textContent = currentUser.points;
-            document.getElementById('totalPoints').textContent = totalSystemPoints;
+            updateUI();
         }
-        
-        // Выход из системы
+
+        // Выход
         function logout() {
             currentUser = null;
             document.getElementById('login').value = '';
             document.getElementById('password').value = '';
-            
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('adminSection').classList.add('hidden');
             document.getElementById('userSection').classList.add('hidden');
         }
-        
-        // Переключение вкладок в админке
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById('adminMainTab').classList.add('hidden');
-            document.getElementById('userManagementTab').classList.add('hidden');
-            
-            if (tabName === 'adminMain') {
-                document.querySelector('.tab:first-child').classList.add('active');
-                document.getElementById('adminMainTab').classList.remove('hidden');
-            } else {
-                document.querySelector('.tab:last-child').classList.add('active');
-                document.getElementById('userManagementTab').classList.remove('hidden');
-            }
-        }
-        
+
         // Обновление таблицы пользователей
         function updateUserTable() {
             const tbody = document.querySelector('#usersTable tbody');
             tbody.innerHTML = '';
             
-            users.forEach(user => {
+            users.forEach((user, index) => {
                 const row = document.createElement('tr');
                 
-                // Ячейка с именем пользователя
-                const nameCell = document.createElement('td');
-                nameCell.textContent = user.name;
-                row.appendChild(nameCell);
+                row.innerHTML = `
+                    <td>${user.name}</td>
+                    <td>${user.login}</td>
+                    <td>${user.points}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editUser(${index})">Изменить</button>
+                        <button class="delete-btn" onclick="deleteUser(${index})">Удалить</button>
+                    </td>
+                `;
                 
-                // Ячейка с логином
-                const loginCell = document.createElement('td');
-                loginCell.textContent = user.login;
-                row.appendChild(loginCell);
-                
-                // Ячейка с паролем (скрыта звездочками)
-                const passwordCell = document.createElement('td');
-                passwordCell.textContent = '•'.repeat(user.password.length);
-                passwordCell.classList.add('password-cell');
-                row.appendChild(passwordCell);
-                
-                // Ячейка с баллами
-                const pointsCell = document.createElement('td');
-                pointsCell.textContent = user.points;
-                row.appendChild(pointsCell);
-                
-                // Ячейка с кнопками действий
-                const actionsCell = document.createElement('td');
-                
-                // Кнопка редактирования
-                const editButton = document.createElement('button');
-                editButton.textContent = 'Редактировать';
-                editButton.classList.add('edit-btn');
-                editButton.onclick = () => editUser(user.id);
-                actionsCell.appendChild(editButton);
-                
-                // Кнопка удаления
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Удалить';
-                deleteButton.classList.add('delete-btn');
-                deleteButton.onclick = () => deleteUser(user.id);
-                actionsCell.appendChild(deleteButton);
-                
-                row.appendChild(actionsCell);
                 tbody.appendChild(row);
             });
         }
-        
-        // Обновление отображения общей суммы баллов
+
+        // Обновление отображения баллов
         function updateTotalPointsDisplay() {
             document.getElementById('totalPoints').textContent = totalSystemPoints;
             document.getElementById('totalPointsAdmin').textContent = totalSystemPoints;
         }
-        
-        // Обновление общей суммы баллов (для админа)
-        function updateTotalPoints() {
-            const newTotal = parseInt(document.getElementById('editTotalPoints').value);
-            
-            if (!isNaN(newTotal) && newTotal >= 0) {
-                totalSystemPoints = newTotal;
-                
-                // Сохраняем данные
-                saveAllData();
-                
-                // Обновляем отображение
-                updateTotalPointsDisplay();
-                
-                // Очищаем поле ввода
-                document.getElementById('editTotalPoints').value = '';
-                
-                alert('Общая сумма баллов успешно обновлена!');
-            } else {
-                alert('Пожалуйста, введите корректное число');
-            }
-        }
-        
-        // Редактирование пользователя
-        function editUser(userId) {
-            const user = users.find(u => u.id === userId);
-            if (!user) return;
-            
-            const newName = prompt(`Введите новое имя для пользователя:`, user.name);
-            if (newName === null) return;
-            
-            const newLogin = prompt(`Введите новый логин для пользователя:`, user.login);
-            if (newLogin === null) return;
-            
-            const newPassword = prompt(`Введите новый пароль для пользователя:`, user.password);
-            if (newPassword === null) return;
-            
-            const newPoints = prompt(`Введите новое количество баллов для пользователя:`, user.points);
-            if (newPoints !== null && !isNaN(newPoints) && newPoints.trim() !== '') {
-                const points = parseInt(newPoints);
-                if (points >= 0) {
-                    // Вычисляем разницу для изменения общей суммы
-                    const difference = points - user.points;
-                    
-                    // Проверяем, достаточно ли баллов в системе
-                    if (difference > totalSystemPoints) {
-                        alert('Недостаточно баллов в системе!');
-                        return;
-                    }
-                    
-                    // Обновляем данные пользователя
-                    user.name = newName || user.name;
-                    user.login = newLogin || user.login;
-                    user.password = newPassword || user.password;
-                    user.points = points;
-                    
-                    // Обновляем общую сумму
-                    totalSystemPoints -= difference;
-                    
-                    // Сохраняем данные
-                    saveAllData();
-                    
-                    // Обновляем отображение
-                    updateUserTable();
-                    updateTotalPointsDisplay();
-                    
-                    // Если редактируется текущий пользователь, обновляем его панель
-                    if (currentUser && currentUser.id === user.id) {
-                        document.getElementById('userName').textContent = user.name;
-                        document.getElementById('userPoints').textContent = user.points;
-                    }
-                    
-                    alert('Данные пользователя успешно обновлены!');
-                } else {
-                    alert('Баллы должны быть положительным числом');
-                }
-            }
-        }
-        
-        // Удаление пользователя
-        function deleteUser(userId) {
-            const userIndex = users.findIndex(u => u.id === userId);
-            if (userIndex === -1) return;
-            
-            const user = users[userIndex];
-            
-            if (confirm(`Вы уверены, что хотите удалить пользователя ${user.name}?`)) {
-                // Возвращаем баллы в общую сумму
-                totalSystemPoints += user.points;
-                
-                // Удаляем пользователя
-                users.splice(userIndex, 1);
-                
-                // Сохраняем данные
-                saveAllData();
-                
-                // Обновляем отображение
-                updateUserTable();
-                updateTotalPointsDisplay();
-                
-                alert('Пользователь успешно удален!');
-            }
-        }
-        
-        // Добавление нового пользователя
+
+        // Добавить пользователя
         function addUser() {
             const name = document.getElementById('newUserName').value;
             const login = document.getElementById('newUserLogin').value;
             const password = document.getElementById('newUserPassword').value;
             const points = parseInt(document.getElementById('newUserPoints').value);
-            
-            if (name && login && password && !isNaN(points) && points >= 0) {
-                // Проверяем, достаточно ли баллов в системе
-                if (points > totalSystemPoints) {
-                    alert('Недостаточно баллов в системе!');
-                    return;
-                }
-                
-                // Проверяем, не занят ли логин
-                if (users.some(u => u.login === login)) {
-                    alert('Пользователь с таким логином уже существует!');
-                    return;
-                }
-                
-                // Добавляем пользователя
-                users.push({
-                    id: nextId++,
+
+            if (name && login && password && !isNaN(points)) {
+                const newUser = {
+                    id: Date.now(),
                     name: name,
                     login: login,
                     password: password,
                     points: points
-                });
+                };
                 
-                // Уменьшаем общую сумму
-                totalSystemPoints -= points;
+                users.push(newUser);
+                saveData();
+                updateUI();
                 
-                // Сохраняем данные
-                saveAllData();
-                
-                // Очищаем поля ввода
+                // Очистить поля
                 document.getElementById('newUserName').value = '';
                 document.getElementById('newUserLogin').value = '';
                 document.getElementById('newUserPassword').value = '';
                 document.getElementById('newUserPoints').value = '';
                 
-                // Обновляем отображение
-                updateUserTable();
-                updateTotalPointsDisplay();
-                
-                alert('Пользователь успешно добавлен!');
+                alert('Пользователь добавлен!');
             } else {
-                alert('Пожалуйста, заполните все поля корректно');
+                alert('Заполните все поля правильно');
             }
         }
-        
-        // Сброс системы
-        function resetSystem() {
-            if (confirm('Вы уверены, что хотите сбросить систему? Все данные будут удалены.')) {
-                users = [
-                    { id: 1, name: "Артем Козирний", login: "artem", password: "123321", points: 500 },
-                    { id: 2, name: "Мария Сидорова", login: "maria", password: "123456", points: 350 },
-                    { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 },
-                    { id: 4, name: "Петр Петров", login: "petr", password: "222", points: 230 },
-                    { id: 5, name: "Анна Смирнова", login: "anna", password: "333", points: 180 },
-                    { id: 6, name: "Сергей Кузнецов", login: "sergey", password: "444", points: 270 },
-                    { id: 7, name: "Ольга Васильева", login: "olga", password: "555", points: 190 },
-                    { id: 8, name: "Дмитрий Попов", login: "dmitry", password: "666", points: 210 },
-                    { id: 9, name: "Екатерина Соколова", login: "ekaterina", password: "777", points: 320 }
-                ];
-                totalSystemPoints = 10000;
-                nextId = 10;
-                
-                // Сохраняем данные
-                saveAllData();
-                
-                // Обновляем отображение
-                updateUserTable();
+
+        // Редактировать пользователя
+        function editUser(index) {
+            const user = users[index];
+            const newPoints = prompt(`Введите новые баллы для ${user.name}:`, user.points);
+            
+            if (newPoints && !isNaN(newPoints)) {
+                user.points = parseInt(newPoints);
+                saveData();
+                updateUI();
+                alert('Баллы обновлены!');
+            }
+        }
+
+        // Удалить пользователя
+        function deleteUser(index) {
+            if (confirm(`Удалить пользователя ${users[index].name}?`)) {
+                users.splice(index, 1);
+                saveData();
+                updateUI();
+                alert('Пользователь удален!');
+            }
+        }
+
+        // Обновить общую сумму
+        function updateTotalPoints() {
+            const newTotal = parseInt(document.getElementById('editTotalPoints').value);
+            if (!isNaN(newTotal)) {
+                totalSystemPoints = newTotal;
+                saveData();
                 updateTotalPointsDisplay();
-                
-                alert('Система успешно сброшена!');
+                document.getElementById('editTotalPoints').value = '';
+                alert('Общая сумма обновлена!');
+            } else {
+                alert('Введите корректное число');
             }
         }
 
@@ -706,61 +502,30 @@
             const data = {
                 users: users,
                 totalSystemPoints: totalSystemPoints,
-                nextId: nextId
+                exportDate: new Date().toISOString()
             };
             
-            const dataStr = JSON.stringify(data, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = 'bank_points_data.json';
-            link.click();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bank_data.json';
+            a.click();
         }
 
-        // Импорт данных
-        function importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            
-            input.onchange = function(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        
-                        if (data.users && data.totalSystemPoints !== undefined && data.nextId !== undefined) {
-                            users = data.users;
-                            totalSystemPoints = data.totalSystemPoints;
-                            nextId = data.nextId;
-                            
-                            saveAllData();
-                            updateUserTable();
-                            updateTotalPointsDisplay();
-                            
-                            alert('Данные успешно импортированы!');
-                        } else {
-                            alert('Неверный формат файла данных');
-                        }
-                    } catch (error) {
-                        alert('Ошибка при чтении файла: ' + error.message);
-                    }
-                };
-                
-                reader.readAsText(file);
-            };
-            
-            input.click();
+        // Сброс системы
+        function resetSystem() {
+            if (confirm('Сбросить систему к начальному состоянию?')) {
+                localStorage.removeItem(STORAGE_KEY);
+                loadData();
+                updateUI();
+                alert('Система сброшена!');
+            }
         }
-        
-        // Инициализация страницы
+
+        // Автозагрузка при старте
         window.onload = function() {
-            updateUserTable();
-            updateTotalPointsDisplay();
+            loadData();
         };
     </script>
 </body>
