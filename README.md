@@ -216,16 +216,14 @@
             font-size: 14px;
             color: #2c3e50;
         }
-        .user-list {
+        .edit-total-form {
             margin: 15px 0;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
+            padding: 15px;
+            background: #e8f4fc;
+            border-radius: 8px;
         }
-        .user-item {
-            margin: 5px 0;
-            padding: 5px;
-            border-bottom: 1px solid #eee;
+        .edit-total-form input {
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -255,20 +253,6 @@
                     <p>Для входа в систему используйте выданные вам логин и пароль.</p>
                     <p>При возникновении проблем с доступом обратитесь к администратору.</p>
                 </div>
-
-                <div class="user-list">
-                    <h3>Доступные пользователи:</h3>
-                    <div class="user-item"><strong>Администратор:</strong> admin / admin123</div>
-                    <div class="user-item"><strong>Артем Козирний:</strong> artem / 123321</div>
-                    <div class="user-item"><strong>Мария Сидорова:</strong> maria / 123456</div>
-                    <div class="user-item"><strong>Иван Иванов:</strong> ivan / 111</div>
-                    <div class="user-item"><strong>Петр Петров:</strong> petr / 222</div>
-                    <div class="user-item"><strong>Анна Смирнова:</strong> anna / 333</div>
-                    <div class="user-item"><strong>Сергей Кузнецов:</strong> sergey / 444</div>
-                    <div class="user-item"><strong>Ольга Васильева:</strong> olga / 555</div>
-                    <div class="user-item"><strong>Дмитрий Попов:</strong> dmitry / 666</div>
-                    <div class="user-item"><strong>Екатерина Соколова:</strong> ekaterina / 777</div>
-                </div>
             </div>
             
             <!-- Личный кабинет пользователя -->
@@ -276,6 +260,11 @@
                 <div class="user-info">
                     <h2>Личный кабинет</h2>
                     <p>Добро пожаловать, <span id="userName"></span>!</p>
+                </div>
+                
+                <div class="total-points">
+                    <h2>Общая сумма баллов в системе</h2>
+                    <div class="amount" id="totalPoints">10000</div>
                 </div>
                 
                 <div class="total-points">
@@ -304,7 +293,13 @@
                     
                     <div class="total-points">
                         <h2>Общая сумма баллов в системе</h2>
-                        <div class="amount" id="totalPoints">10000</div>
+                        <div class="amount" id="totalPointsAdmin">10000</div>
+                    </div>
+
+                    <div class="edit-total-form">
+                        <h3>Изменить общую сумму баллов</h3>
+                        <input type="number" id="editTotalPoints" placeholder="Новая общая сумма" min="0">
+                        <button onclick="updateTotalPoints()">Обновить</button>
                     </div>
                     
                     <!-- Таблица пользователей -->
@@ -427,7 +422,7 @@
             document.getElementById('adminSection').classList.remove('hidden');
             
             updateUserTable();
-            updateTotalPoints();
+            updateTotalPointsDisplay();
         }
         
         // Показать личный кабинет пользователя
@@ -438,6 +433,7 @@
             
             document.getElementById('userName').textContent = currentUser.name;
             document.getElementById('userPoints').textContent = currentUser.points;
+            document.getElementById('totalPoints').textContent = totalSystemPoints;
         }
         
         // Выход из системы
@@ -518,8 +514,31 @@
         }
         
         // Обновление отображения общей суммы баллов
-        function updateTotalPoints() {
+        function updateTotalPointsDisplay() {
             document.getElementById('totalPoints').textContent = totalSystemPoints;
+            document.getElementById('totalPointsAdmin').textContent = totalSystemPoints;
+        }
+        
+        // Обновление общей суммы баллов (для админа)
+        function updateTotalPoints() {
+            const newTotal = parseInt(document.getElementById('editTotalPoints').value);
+            
+            if (!isNaN(newTotal) && newTotal >= 0) {
+                totalSystemPoints = newTotal;
+                
+                // Сохраняем данные
+                saveAllData();
+                
+                // Обновляем отображение
+                updateTotalPointsDisplay();
+                
+                // Очищаем поле ввода
+                document.getElementById('editTotalPoints').value = '';
+                
+                alert('Общая сумма баллов успешно обновлена!');
+            } else {
+                alert('Пожалуйста, введите корректное число');
+            }
         }
         
         // Редактирование пользователя
@@ -563,7 +582,7 @@
                     
                     // Обновляем отображение
                     updateUserTable();
-                    updateTotalPoints();
+                    updateTotalPointsDisplay();
                     
                     // Если редактируется текущий пользователь, обновляем его панель
                     if (currentUser && currentUser.id === user.id) {
@@ -597,7 +616,7 @@
                 
                 // Обновляем отображение
                 updateUserTable();
-                updateTotalPoints();
+                updateTotalPointsDisplay();
                 
                 alert('Пользователь успешно удален!');
             }
@@ -646,7 +665,7 @@
                 
                 // Обновляем отображение
                 updateUserTable();
-                updateTotalPoints();
+                updateTotalPointsDisplay();
                 
                 alert('Пользователь успешно добавлен!');
             } else {
@@ -676,7 +695,7 @@
                 
                 // Обновляем отображение
                 updateUserTable();
-                updateTotalPoints();
+                updateTotalPointsDisplay();
                 
                 alert('Система успешно сброшена!');
             }
@@ -721,7 +740,7 @@
                             
                             saveAllData();
                             updateUserTable();
-                            updateTotalPoints();
+                            updateTotalPointsDisplay();
                             
                             alert('Данные успешно импортированы!');
                         } else {
@@ -741,7 +760,7 @@
         // Инициализация страницы
         window.onload = function() {
             updateUserTable();
-            updateTotalPoints();
+            updateTotalPointsDisplay();
         };
     </script>
 </body>
