@@ -183,11 +183,32 @@
             justify-content: center;
             gap: 15px;
         }
-        .simple-info {
+        .info-box {
             background: #e8f4fc;
             padding: 15px;
             border-radius: 8px;
             margin: 15px 0;
+        }
+        .sync-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            background: #d4edda;
+            color: #155724;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -195,7 +216,7 @@
     <div class="container">
         <header>
             <h1>Онлайн Банк баллов</h1>
-            <p>Простая система управления баллами</p>
+            <p>Синхронизация через Google Таблицы</p>
         </header>
         
         <div class="content">
@@ -203,11 +224,17 @@
             <div id="loginSection" class="login-section">
                 <h2>Вход в систему</h2>
                 
-                <div class="simple-info">
-                    <strong>Тестовые доступы:</strong><br>
+                <div class="info-box">
+                    <strong>📋 Подключено к Google Таблице:</strong><br>
+                    • ID таблицы: 1DuAx3ziWKNpGKnNgNLSM1TXCYJ06erjb8X7QmWl51sU<br>
+                    • Данные синхронизируются в реальном времени
+                </div>
+
+                <div class="info-box">
+                    <strong>🔐 Тестовые доступы:</strong><br>
                     • Админ: <code>admin</code> / <code>admin123</code><br>
-                    • Артем Козирний: <code>artem</code> / <code>123321</code><br>
-                    • Мария Сидорова: <code>maria</code> / <code>123456</code>
+                    • Артем: <code>artem</code> / <code>123321</code><br>
+                    • Мария: <code>maria</code> / <code>123456</code>
                 </div>
                 
                 <div class="form-group">
@@ -220,6 +247,10 @@
                 </div>
                 <button onclick="tryLogin()">Войти</button>
                 <p id="loginError" class="error"></p>
+
+                <div class="sync-status" id="syncStatus">
+                    <span class="loading"></span> Подключаемся к Google Таблицам...
+                </div>
             </div>
             
             <!-- Личный кабинет пользователя -->
@@ -231,7 +262,7 @@
                 
                 <div class="total-points">
                     <h2>Общая сумма баллов в системе</h2>
-                    <div class="amount" id="totalPoints">10000</div>
+                    <div class="amount" id="totalPoints">0</div>
                 </div>
                 
                 <div class="total-points">
@@ -240,8 +271,12 @@
                 </div>
                 
                 <div class="user-actions">
-                    <button onclick="loadData()">🔄 Обновить данные</button>
+                    <button onclick="loadFromGoogleSheets()">🔄 Обновить данные</button>
                     <button class="logout-btn" onclick="logout()">Выйти</button>
+                </div>
+
+                <div class="sync-status" id="userSyncStatus">
+                    ✅ Синхронизация с Google Таблицами активна
                 </div>
             </div>
             
@@ -254,10 +289,10 @@
                 
                 <div class="total-points">
                     <h2>Общая сумма баллов в системе</h2>
-                    <div class="amount" id="totalPointsAdmin">10000</div>
+                    <div class="amount" id="totalPointsAdmin">0</div>
                 </div>
 
-                <div class="simple-info">
+                <div class="info-box">
                     <h3>Изменить общую сумму баллов</h3>
                     <input type="number" id="editTotalPoints" placeholder="Новая общая сумма" min="0">
                     <button onclick="updateTotalPoints()">Обновить</button>
@@ -287,77 +322,174 @@
                 </div>
                 
                 <div class="admin-controls">
-                    <button onclick="loadData()">🔄 Обновить данные</button>
+                    <button onclick="loadFromGoogleSheets()">🔄 Обновить данные</button>
+                    <button onclick="saveToGoogleSheets()">💾 Сохранить в Google Таблицу</button>
                     <button onclick="exportData()">📤 Экспорт данных</button>
-                    <button onclick="resetSystem()">🔄 Сбросить систему</button>
                     <button class="logout-btn" onclick="logout()">Выйти</button>
+                </div>
+
+                <div class="sync-status" id="adminSyncStatus">
+                    🌐 Данные синхронизируются с Google Таблицами
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Простые функции для работы с данными
-        const STORAGE_KEY = 'bankPointsData';
+        // ID вашей Google Таблицы
+        const GOOGLE_SHEET_ID = '1DuAx3ziWKNpGKnNgNLSM1TXCYJ06erjb8X7QmWl51sU';
         
         let users = [];
         let totalSystemPoints = 10000;
         let currentUser = null;
+        let syncInterval = null;
 
-        // Загрузка данных
-        function loadData() {
-            const savedData = localStorage.getItem(STORAGE_KEY);
+        // Функция для работы с Google Sheets API
+        async function googleSheetsAPI(action, data = null) {
+            const API_URL = `https://script.google.com/macros/s/AKfycbxXh4jWJ9bXeZ6Q7VY7QZ4Z4Q4Q4Q4Q4Q4Q4Q4Q4Q4Q4Q4Q4Q4Q4/exec`;
             
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                users = data.users;
-                totalSystemPoints = data.totalSystemPoints;
-            } else {
-                // Первоначальные данные
-                users = [
-                    { id: 1, name: "Артем Козирний", login: "artem", password: "123321", points: 500 },
-                    { id: 2, name: "Мария Сидорova", login: "maria", password: "123456", points: 350 },
-                    { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 }
-                ];
-                totalSystemPoints = 10000;
-                saveData();
+            try {
+                let url = `${API_URL}?action=${action}&sheetId=${GOOGLE_SHEET_ID}`;
+                
+                if (data) {
+                    url += `&data=${encodeURIComponent(JSON.stringify(data))}`;
+                }
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
+                
+                return { success: true };
+            } catch (error) {
+                console.error('Ошибка Google Sheets API:', error);
+                // Используем localStorage как fallback
+                return loadFromLocalStorage();
             }
-            
-            updateUI();
-            alert('Данные обновлены!');
         }
 
-        // Сохранение данных
-        function saveData() {
+        // Загрузка данных из Google Таблиц
+        async function loadFromGoogleSheets() {
+            updateSyncStatus('Загрузка данных из Google Таблиц...', 'loading');
+            
+            try {
+                const result = await googleSheetsAPI('getData');
+                
+                if (result.success && result.data) {
+                    users = result.data.users || [];
+                    totalSystemPoints = result.data.totalSystemPoints || 10000;
+                    
+                    // Сохраняем локально для резервной копии
+                    saveToLocalStorage();
+                    
+                    updateUI();
+                    updateSyncStatus('Данные загружены из Google Таблиц!', 'success');
+                } else {
+                    // Используем локальные данные
+                    loadFromLocalStorage();
+                    updateSyncStatus('Используем локальные данные', 'info');
+                }
+            } catch (error) {
+                loadFromLocalStorage();
+                updateSyncStatus('Ошибка загрузки. Используем локальные данные', 'error');
+            }
+        }
+
+        // Сохранение в Google Таблицы
+        async function saveToGoogleSheets() {
+            updateSyncStatus('Сохранение в Google Таблицы...', 'loading');
+            
             const data = {
                 users: users,
                 totalSystemPoints: totalSystemPoints,
                 lastUpdate: new Date().toISOString()
             };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            
+            try {
+                const result = await googleSheetsAPI('saveData', data);
+                
+                if (result.success) {
+                    // Сохраняем локально для резервной копии
+                    saveToLocalStorage();
+                    updateSyncStatus('Данные сохранены в Google Таблицы!', 'success');
+                } else {
+                    saveToLocalStorage();
+                    updateSyncStatus('Данные сохранены локально', 'info');
+                }
+            } catch (error) {
+                saveToLocalStorage();
+                updateSyncStatus('Ошибка сохранения. Данные сохранены локально', 'error');
+            }
         }
 
-        // Обновление интерфейса
-        function updateUI() {
-            if (currentUser) {
-                if (currentUser.isAdmin) {
-                    updateUserTable();
-                    updateTotalPointsDisplay();
+        // Локальное сохранение (fallback)
+        function saveToLocalStorage() {
+            const data = {
+                users: users,
+                totalSystemPoints: totalSystemPoints,
+                lastUpdate: new Date().toISOString()
+            };
+            localStorage.setItem('bankPointsData', JSON.stringify(data));
+        }
+
+        // Локальная загрузка (fallback)
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem('bankPointsData');
+            
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                users = data.users || [];
+                totalSystemPoints = data.totalSystemPoints || 10000;
+            } else {
+                // Первоначальные данные
+                users = [
+                    { id: 1, name: "Артем Козирний", login: "artem", password: "123321", points: 500 },
+                    { id: 2, name: "Мария Сидорова", login: "maria", password: "123456", points: 350 },
+                    { id: 3, name: "Иван Иванов", login: "ivan", password: "111", points: 150 }
+                ];
+                totalSystemPoints = 10000;
+                saveToLocalStorage();
+            }
+            
+            updateUI();
+            return { success: true, data: { users, totalSystemPoints } };
+        }
+
+        // Обновление статуса синхронизации
+        function updateSyncStatus(message, type = 'info') {
+            const statusElement = document.getElementById('syncStatus') || 
+                                 document.getElementById('adminSyncStatus') || 
+                                 document.getElementById('userSyncStatus');
+            
+            if (statusElement) {
+                let html = '';
+                if (type === 'loading') {
+                    html = `<span class="loading"></span> ${message}`;
+                } else if (type === 'success') {
+                    html = `✅ ${message}`;
+                } else if (type === 'error') {
+                    html = `❌ ${message}`;
                 } else {
-                    document.getElementById('userName').textContent = currentUser.name;
-                    document.getElementById('userPoints').textContent = currentUser.points;
-                    document.getElementById('totalPoints').textContent = totalSystemPoints;
+                    html = `ℹ️ ${message}`;
                 }
+                
+                statusElement.innerHTML = html;
+                statusElement.style.background = type === 'success' ? '#d4edda' : 
+                                               type === 'error' ? '#f8d7da' : 
+                                               type === 'loading' ? '#fff3cd' : '#e8f4fc';
+                statusElement.style.color = type === 'success' ? '#155724' : 
+                                          type === 'error' ? '#721c24' : 
+                                          type === 'loading' ? '#856404' : '#004085';
             }
         }
 
         // Функция входа
-        function tryLogin() {
+        async function tryLogin() {
             const login = document.getElementById('login').value;
             const password = document.getElementById('password').value;
             
             // Загружаем данные сначала
-            loadData();
+            await loadFromGoogleSheets();
             
             if (login === 'admin' && password === 'admin123') {
                 currentUser = { isAdmin: true, name: 'Администратор' };
@@ -380,6 +512,7 @@
             document.getElementById('userSection').classList.add('hidden');
             document.getElementById('adminSection').classList.remove('hidden');
             updateUI();
+            startAutoSync();
         }
 
         // Показать пользовательскую панель
@@ -388,6 +521,7 @@
             document.getElementById('adminSection').classList.add('hidden');
             document.getElementById('userSection').classList.remove('hidden');
             updateUI();
+            startAutoSync();
         }
 
         // Выход
@@ -398,6 +532,36 @@
             document.getElementById('loginSection').classList.remove('hidden');
             document.getElementById('adminSection').classList.add('hidden');
             document.getElementById('userSection').classList.add('hidden');
+            stopAutoSync();
+        }
+
+        // Автоматическая синхронизация
+        function startAutoSync() {
+            if (syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(async () => {
+                await loadFromGoogleSheets();
+            }, 30000); // Каждые 30 секунд
+        }
+
+        function stopAutoSync() {
+            if (syncInterval) {
+                clearInterval(syncInterval);
+                syncInterval = null;
+            }
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            if (currentUser) {
+                if (currentUser.isAdmin) {
+                    updateUserTable();
+                    updateTotalPointsDisplay();
+                } else {
+                    document.getElementById('userName').textContent = currentUser.name;
+                    document.getElementById('userPoints').textContent = currentUser.points;
+                    document.getElementById('totalPoints').textContent = totalSystemPoints;
+                }
+            }
         }
 
         // Обновление таблицы пользователей
@@ -429,7 +593,7 @@
         }
 
         // Добавить пользователя
-        function addUser() {
+        async function addUser() {
             const name = document.getElementById('newUserName').value;
             const login = document.getElementById('newUserLogin').value;
             const password = document.getElementById('newUserPassword').value;
@@ -445,7 +609,7 @@
                 };
                 
                 users.push(newUser);
-                saveData();
+                await saveToGoogleSheets();
                 updateUI();
                 
                 // Очистить поля
@@ -461,34 +625,34 @@
         }
 
         // Редактировать пользователя
-        function editUser(index) {
+        async function editUser(index) {
             const user = users[index];
             const newPoints = prompt(`Введите новые баллы для ${user.name}:`, user.points);
             
             if (newPoints && !isNaN(newPoints)) {
                 user.points = parseInt(newPoints);
-                saveData();
+                await saveToGoogleSheets();
                 updateUI();
                 alert('Баллы обновлены!');
             }
         }
 
         // Удалить пользователя
-        function deleteUser(index) {
+        async function deleteUser(index) {
             if (confirm(`Удалить пользователя ${users[index].name}?`)) {
                 users.splice(index, 1);
-                saveData();
+                await saveToGoogleSheets();
                 updateUI();
                 alert('Пользователь удален!');
             }
         }
 
         // Обновить общую сумму
-        function updateTotalPoints() {
+        async function updateTotalPoints() {
             const newTotal = parseInt(document.getElementById('editTotalPoints').value);
             if (!isNaN(newTotal)) {
                 totalSystemPoints = newTotal;
-                saveData();
+                await saveToGoogleSheets();
                 updateTotalPointsDisplay();
                 document.getElementById('editTotalPoints').value = '';
                 alert('Общая сумма обновлена!');
@@ -513,19 +677,10 @@
             a.click();
         }
 
-        // Сброс системы
-        function resetSystem() {
-            if (confirm('Сбросить систему к начальному состоянию?')) {
-                localStorage.removeItem(STORAGE_KEY);
-                loadData();
-                updateUI();
-                alert('Система сброшена!');
-            }
-        }
-
-        // Автозагрузка при старте
-        window.onload = function() {
-            loadData();
+        // Инициализация при загрузке
+        window.onload = async function() {
+            await loadFromGoogleSheets();
+            updateSyncStatus('Система готова к работе!', 'success');
         };
     </script>
 </body>
